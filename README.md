@@ -1,6 +1,6 @@
 # Assetto Corsa: Gear Ratio Display
 
-![Version](https://img.shields.io/badge/Version-1.0-blue.svg) ![Compatibility](https://img.shields.io/badge/CSP-0.2.0+-green.svg)
+![Version](https://img.shields.io/badge/Version-1.0.1-blue.svg) ![Compatibility](https://img.shields.io/badge/CSP-0.2.0+-green.svg)
 
 ![Preview](https://i.imgur.com/WgYrcdV.png)
 
