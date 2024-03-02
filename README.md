@@ -14,7 +14,7 @@ It can either show the speed in metric or imperial units, and it can also adjust
 
 This mod requires [***Content Manager***](https://assettocorsa.club/content-manager.html) and [***Custom Shaders Patch***](https://acstuff.ru/patch/) to be installed!
 
-First, download the latest version from [***Releases***](https://github.com/adam10603/AC-Gear-Ratio-Display/releases). After that you can simply drag and drop the .zip file into Content Manager to install it.
+First, download the latest version from [***Releases***](https://github.com/adam10603/AC-Gear-Ratio-Display/releases) or from [***RaceDepartment***](https://www.racedepartment.com/downloads/gear-ratio-display.67477/). After that you can simply drag and drop the .zip file into Content Manager to install it.
 
 Once installed, it will automatically appear on the setup screen, just like this:
 
