@@ -45,7 +45,7 @@ end
 ---@param cPhys ac.StateCarPhysics
 local function updateGearSetHash(vehicle, cPhys)
 
-    if vehicle.gearCount < 1 then return false end
+    if vehicle.gearCount < 1 or not cPhys.gearRatios or #cPhys.gearRatios == 0 then return false end
 
     local currentGearSetHash = 0
 
@@ -214,13 +214,18 @@ function script.windowMain()
 
     if not vehicle or vehicle.isAIControlled or not vehicle.physicsAvailable then return end
 
-    local cPhys = ac.getCarPhysics(0)
-
-    if #lineData == 0 or updateGearSetHash(vehicle, cPhys) then updateData(vehicle, cPhys) end
-
     ui.pushFont(ui.Font.Title)
     ui.textAligned("Gear Ratios", tmpVec1:set(0.5, 0.5), tmpVec2:set(ui.availableSpaceX(), 34))
     ui.popFont()
+
+    local cPhys = ac.getCarPhysics(0)
+
+    if not cPhys.gearRatios or #cPhys.gearRatios == 0 or not cPhys.finalRatio or cPhys.finalRatio == 0 then
+        ui.textColored("    Cannot read gear ratios!\n    This usually happens if a mod car has encrypted data files.", rgbm(1.0, 0.0, 0.0, 1.0))
+        return
+    end
+
+    if #lineData == 0 or updateGearSetHash(vehicle, cPhys) then updateData(vehicle, cPhys) end
 
     local speedMult = (savedCfg.metric and 1.0 or 0.62137119)
     local speedDiv  = (savedCfg.metric and 50 or 25)
