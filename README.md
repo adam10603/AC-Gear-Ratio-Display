@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/Version-1.0-blue.svg) ![Compatibility](https://img.shields.io/badge/CSP-0.2.0+-green.svg)
 
-![Preview](https://i.imgur.com/bu61E1Q.png)
+![Preview](https://i.imgur.com/WgYrcdV.png)
 
 ## 🖊️ Intro
 
@@ -18,7 +18,7 @@ First, download the latest version from [***Releases***](https://github.com/adam
 
 Once installed, it will automatically appear on the setup screen, just like this:
 
-![Setup screen](https://i.imgur.com/v9zCSDe.png)
+![Setup screen](https://i.imgur.com/rsotG2r.png)
 
 ## 💖 Supporting
 
