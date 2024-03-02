@@ -8,8 +8,8 @@ local savedCfg = ac.storage({
 local white              = rgbm(1.0, 1.0, 1.0, 1.0)
 local graphPadding       = 48
 local graphDivColor      = rgbm(1.0, 1.0, 1.0, 0.15)
--- local graphPathColor     = rgbm(59/255, 159/255, 255/255, 1)
-local graphPathColor     = rgbm(1.0, 0.0, 0.0, 1)
+local graphPathColor     = rgbm(59/255, 159/255, 255/255, 1)
+-- local graphPathColor     = rgbm(1.0, 0.0, 0.0, 1)
 
 local zeroVec            = vec2() -- Do not modify
 local tmpVec1            = vec2()
