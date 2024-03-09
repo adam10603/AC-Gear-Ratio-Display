@@ -23,6 +23,10 @@ local tooltips = {
     showShiftingPoints = "Changes the graph to show the ideal shifting points based on the engine's power curve.\n\nOnly available for cars with no MGU-K!"
 }
 
+local function isNumberValid(x)
+    return type(x) == "number" and not math.isnan(x) and not math.isinf(x)
+end
+
 ---@param vehicle ac.StateCar
 local function getReferenceWheelIndicies(vehicle)
     return (vehicle.tractionType == 1) and { 0, 1 } or { 2, 3 }
@@ -78,13 +82,17 @@ local function updateData(vehicle, cPhys)
     local gearStartSpeed = 0 -- km/h
 
     for gear = 1, vehicle.gearCount, 1 do
-        local currentGearEndSpeed = getPredictedSpeedForRPM(perfData.maxRPM, vehicle, perfData:getDrivetrainRatio(gear)) * 3.6
+        local currentDrivetrainRatio = perfData:getDrivetrainRatio(gear)
+        if not isNumberValid(currentDrivetrainRatio) or currentDrivetrainRatio == 0 then break end
+        local currentGearEndSpeed = getPredictedSpeedForRPM(perfData.maxRPM, vehicle, currentDrivetrainRatio) * 3.6
         table.insert(lineData, {
             { gearStartSpeed, gearStartRPM },
             { currentGearEndSpeed, perfData.maxRPM }
         })
-        gearStartSpeed = currentGearEndSpeed
-        gearStartRPM   = perfData.maxRPM * (perfData:getGearRatio(gear + 1) / perfData:getGearRatio(gear))
+        local curRatio  = perfData:getGearRatio(gear)
+        local nextRatio = perfData:getGearRatio(gear + 1)
+        gearStartSpeed  = currentGearEndSpeed
+        gearStartRPM    = perfData.maxRPM * (nextRatio / curRatio)
     end
 
     if not perfData.brokenEngineIni and perfData.baseTorqueCurve and vehicle.mgukDeliveryCount == 0 then
@@ -94,14 +102,18 @@ local function updateData(vehicle, cPhys)
         gearStartSpeed = 0 -- km/h
 
         for gear = 1, vehicle.gearCount, 1 do
-            local currentGearEndRPM = math.min(shiftingTable[gear].upshiftRPM, perfData.maxRPM)
-            local currentGearEndSpeed = getPredictedSpeedForRPM(currentGearEndRPM, vehicle, perfData:getDrivetrainRatio(gear)) * 3.6
+            local currentGearEndRPM      = math.min(shiftingTable[gear].upshiftRPM, perfData.maxRPM)
+            local currentDrivetrainRatio = perfData:getDrivetrainRatio(gear)
+            if not isNumberValid(currentDrivetrainRatio) or currentDrivetrainRatio == 0 then break end
+            local currentGearEndSpeed = getPredictedSpeedForRPM(currentGearEndRPM, vehicle, currentDrivetrainRatio) * 3.6
             table.insert(lineData2, {
                 { gearStartSpeed, gearStartRPM },
                 { currentGearEndSpeed, currentGearEndRPM }
             })
+            local curRatio  = perfData:getGearRatio(gear)
+            local nextRatio = perfData:getGearRatio(gear + 1)
             gearStartSpeed = currentGearEndSpeed
-            gearStartRPM   = currentGearEndRPM * (perfData:getGearRatio(gear + 1) / perfData:getGearRatio(gear))
+            gearStartRPM   = currentGearEndRPM * (nextRatio / curRatio)
         end
     end
 end
