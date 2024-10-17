@@ -9,6 +9,7 @@ local white              = rgbm(1.0, 1.0, 1.0, 1.0)
 local graphPadding       = 48
 local graphDivColor      = rgbm(1.0, 1.0, 1.0, 0.15)
 local graphPathColor     = rgbm(59/255, 159/255, 255/255, 1)
+local graphPathColor2    = rgbm(1.0, 1.0, 1.0, 1.0)
 -- local graphPathColor     = rgbm(1.0, 0.0, 0.0, 1)
 
 local zeroVec            = vec2() -- Do not modify
@@ -58,6 +59,7 @@ local function updateGearSetHash(vehicle, cPhys)
     end
 
     currentGearSetHash = currentGearSetHash + cPhys.finalRatio * 1024
+    currentGearSetHash = currentGearSetHash + vehicle.rpmLimiter
 
     local ret = (currentGearSetHash ~= prevGearSetHash)
 
@@ -138,7 +140,7 @@ local function showCheckbox(cfgKey, name, inverted, disabled, indent)
     addTooltipToLastItem(cfgKey)
 end
 
-local function drawGraph(size, xTitle, yTitle, xMin, xMax, yMin, yMax, xDiv, yDiv, xMult, lines)
+local function drawGraph(size, xTitle, yTitle, xMin, xMax, yMin, yMax, xDiv, yDiv, xMult, lines, lines2)
     ui.childWindow("GRD_Graph", size, false, ui.WindowFlags.NoBackground + ui.WindowFlags.NoScrollbar, function ()
         ui.pushFont(ui.Font.Small)
 
@@ -197,12 +199,44 @@ local function drawGraph(size, xTitle, yTitle, xMin, xMax, yMin, yMax, xDiv, yDi
         end
 
         for _, v in pairs(lines) do
-            local lineX1 = math.round(graphPadding + (v[1][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
-            local lineY1 = math.round(topPadding + (1.0 - (v[1][2] - yMin) / yRange) * graphHeight) or 0
-            local lineX2 = math.round(graphPadding + (v[2][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
-            local lineY2 = math.round(topPadding + (1.0 - (v[2][2] - yMin) / yRange) * graphHeight) or 0
+            local lineX1 = (graphPadding + (v[1][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
+            local lineY1 = (topPadding + (1.0 - (v[1][2] - yMin) / yRange) * graphHeight) or 0
+            local lineX2 = (graphPadding + (v[2][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
+            local lineY2 = (topPadding + (1.0 - (v[2][2] - yMin) / yRange) * graphHeight) or 0
 
             ui.drawLine(tmpVec1:set(lineX1, lineY1), tmpVec2:set(lineX2, lineY2), graphPathColor, 3)
+        end
+
+        if lines2 ~= nil and #lines2 > 1 then
+            for i, v in pairs(lines2) do
+                local lineX1 = (graphPadding + (v[1][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
+                local lineY1 = (topPadding + (1.0 - (v[1][2] - yMin) / yRange) * graphHeight) or 0
+                local lineX2 = (graphPadding + (v[2][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
+                local lineY2 = (topPadding + (1.0 - (v[2][2] - yMin) / yRange) * graphHeight) or 0
+
+                if i > 1 then
+                    ui.pathLineTo(tmpVec1:set(lineX1, lineY1))
+                    ui.pathSmoothStroke(graphPathColor, false, 3)
+                    ui.drawCircleFilled(tmpVec1:set(lineX1, lineY1), 1.5, graphPathColor)
+                end
+                if i < #lines2 then
+                    ui.pathLineTo(tmpVec1:set(lineX2, lineY2))
+                end
+            end
+
+            for i, v in pairs(lines2) do
+                -- local lineX1 = (graphPadding + (v[1][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
+                -- local lineY1 = (topPadding + (1.0 - (v[1][2] - yMin) / yRange) * graphHeight) or 0
+                local lineX2 = (graphPadding + (v[2][1] - xMin) / xRange * graphWidth * xMult + xOffset) or 0
+                local lineY2 = (topPadding + (1.0 - (v[2][2] - yMin) / yRange) * graphHeight) or 0
+
+                -- if i > 1 then
+                    -- ui.drawCircleFilled(tmpVec1:set(lineX1, lineY1), 5, graphPathColor2, 12)
+                -- end
+                if i < #lines2 then
+                    ui.drawCircleFilled(tmpVec1:set(lineX2, lineY2), 5, graphPathColor2, 12)
+                end
+            end
         end
 
         ui.offsetCursorY(size.y - graphPadding + 30)
@@ -239,10 +273,9 @@ function script.windowMain()
 
     if #lineData == 0 or updateGearSetHash(vehicle, cPhys) then updateData(vehicle, cPhys) end
 
-    local speedMult = (savedCfg.metric and 1.0 or 0.62137119)
-    local speedDiv  = (savedCfg.metric and 50 or 25)
-
-    local dataToUse = ((savedCfg.showShiftingPoints and #lineData2 > 0) and lineData2 or lineData)
+    local speedMult  = (savedCfg.metric and 1.0 or 0.62137119)
+    local speedDiv   = (savedCfg.metric and 50 or 25)
+    local drawShifts = (savedCfg.showShiftingPoints and #lineData2 > 1)
 
     drawGraph(
         vec2(ui.availableSpace().x, ui.availableSpace().y - 40),
@@ -255,10 +288,11 @@ function script.windowMain()
         speedDiv,
         1000,
         speedMult,
-        dataToUse
+        drawShifts and lineData2 or lineData,
+        drawShifts and lineData2 or nil
     )
 
     showCheckbox("metric", "Metric", false, false, 0)
     ui.sameLine()
-    showCheckbox("showShiftingPoints", "Show shifting points", false, #lineData2 == 0, 0)
+    showCheckbox("showShiftingPoints", "Show shifting points", false, #lineData2 <= 1, 0)
 end
