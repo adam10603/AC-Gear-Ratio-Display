@@ -111,7 +111,7 @@ function M:getMaxTQ(rpm, gear)
     local totalBoost = 0.0 -- Total boost from all turbos
 
     for _, turbo in ipairs(self.turboData) do
-        local tBoost = 0.0 -- Boost from this turbo
+        local currentTurboBoost = (rpm / turbo.referenceRPM) ^ turbo.gamma -- 0 -- Boost from this turbo
 
         if table.nkeys(turbo.controllers) > 0 then
             for _, controller in ipairs(turbo.controllers) do
@@ -121,22 +121,19 @@ function M:getMaxTQ(rpm, gear)
                     controller.LUT.useCubicInterpolation = true
                     controllerValue = controller.LUT:get(rpm)
                 elseif turbo.controllerInput == "GEAR" then
-                    turbo.controllerLUT.useCubicInterpolation = false
-                    controllerValue = turbo.controllerLUT:get(gear)
+                    controller.LUT.useCubicInterpolation = false
+                    controllerValue = controller.LUT:get(gear)
                 end
 
                 if controller.combinator == "ADD" then
-                    tBoost = tBoost + controllerValue
+                    currentTurboBoost = currentTurboBoost + controllerValue
                 elseif controller.combinator == "MULT" then
-                    tBoost = tBoost * controllerValue
+                    currentTurboBoost = currentTurboBoost * controllerValue
                 end
             end
-        else
-            -- No special controllers, standard boost math
-            tBoost = tBoost + (rpm / turbo.referenceRPM) ^ turbo.gamma
         end
 
-        totalBoost = totalBoost + math.min(tBoost, turbo.boostLimit)
+        totalBoost = totalBoost + math.min(currentTurboBoost, turbo.boostLimit)
     end
 
     return baseTorque * (1.0 + totalBoost)
@@ -178,7 +175,7 @@ function M:calcShiftingTable(minNormRPM, maxNormRPM)
 
         if self.vehicle.mgukDeliveryCount == 0 then
             local bestArea = 0
-            local areaSkew = math.lerp(1.0, 1.2, (gear - 1) / (self.vehicle.gearCount - 2)) -- shifts the bias of the power integral higher as the gear number increases
+            local areaSkew = math.lerp(1.0, 1.25, (gear - 1) / (self.vehicle.gearCount - 2)) -- shifts the bias of the power integral higher as the gear number increases
             local nextOverCurrentRatio = self:getGearRatio(gear + 1) / self:getGearRatio(gear)
             for i = 0, 300, 1 do
                 local upshiftRPM = self:getAbsoluteRPM(i / 300.0)
