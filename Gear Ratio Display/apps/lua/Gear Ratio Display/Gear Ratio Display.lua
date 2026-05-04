@@ -11,9 +11,10 @@ local graphDivColor        = rgbm(1.0, 1.0, 1.0, 0.25)
 local graphSubDivColor     = rgbm(1.0, 1.0, 1.0, 0.085)
 local graphPathColor       = rgbm(59/255, 159/255, 255/255, 1)
 local graphPathColor2      = rgbm(1.0, 1.0, 1.0, 1.0)
-local graphYHighlightColor = rgbm(0.075, 0.75, 0.0, 0.3)
+-- local graphYHighlightColor = rgbm(0.075, 0.75, 0.0, 0.3)
+local graphYHighlightColor = rgbm(59/255, 159/255, 255/255, 0.375)
 -- local graphYHighlightColor = rgbm(0.1, 1.0, 0.0, 0.2)
-local graphYLimitColor     = rgbm(0.0, 0.0, 0.0, 1.0)
+local graphYLimitColor     = rgbm(1.0, 0.0, 0.0, 0.5)
 -- local graphYLimitColor     = rgbm(0.075, 0.75, 0.0, 1.0)
 -- local graphPathColor     = rgbm(1.0, 0.0, 0.0, 1)
 
@@ -31,7 +32,7 @@ local canGetPowerBand  = true
 
 local tooltips = {
     metric             = "Toggles between KPH and MPH.",
-    showShiftingPoints = "Changes the graph to show the optimal shifting points based on the engine's power curve.\n\nAlso highlights the ideal power band in green. This is the RPM range where the engine outputs over 98% of its peak power.\n\nThe maximum RPM limit will be shown with a black line.\n\nThis setting is only available for cars with no MGU-K!"
+    showShiftingPoints = "Changes the graph to show the optimal shifting points (based on the engine's power curve).\n\nAlso highlights the ideal power band in blue. This is the RPM range where the engine outputs over 98% of its peak power.\n\nThis setting is only available for cars with no MGU-K!"
 }
 
 local function isNumberValid(x)
@@ -229,16 +230,6 @@ local function drawGraph(size, xTitle, yTitle, xMin, xMax, yMin, yMax, xDiv, yDi
             ui.setCursorY(0)
         end
 
-        if yLimitHighlight ~= nil and yLimitHighlight > 0 then
-            ui.drawLine(
-                tmpVec1:set(graphPadding + xOffset, math.round(topPadding + yPPU * ((yMax - yLimitHighlight) - yMin))),
-                tmpVec2:set(size.x - graphPadding + xOffset, math.round(topPadding + yPPU * ((yMax - yLimitHighlight) - xMin))),
-                graphYLimitColor
-            )
-            ui.setCursorX(xOffset)
-            ui.setCursorY(0)
-        end
-
         for x = xMin, xMax, xDiv do
             ui.drawLine(
                 tmpVec1:set(math.round(graphPadding + xPPU * (x - xMin) + xOffset) or 0, topPadding),
@@ -257,21 +248,31 @@ local function drawGraph(size, xTitle, yTitle, xMin, xMax, yMin, yMax, xDiv, yDi
             ui.setCursorY(0)
         end
 
+        -- -- Prevents horizontal division lines from being drawn under the Y limit highlight line. Assumes the limit line is 3 thicc.
+        -- local function shouldDrawLine(yPixelCoord)
+        --     if yLimitHighlight ~= nil and yLimitHighlightPixelY > 0 then
+        --         return math.abs(yLimitHighlightPixelY - yPixelCoord) > 1
+        --     end
+        -- end
+
         for y = yMin, yMax, yDiv do
             if ySubDiv >= 2 and y ~= yMin then
                 for ySubdivIndex = 1, ySubDiv - 1, 1 do
                     local t = ySubdivIndex / ySubDiv
+                    local lineYCoord = math.round(topPadding + yPPU * ((y - yDiv * t) - yMin))
                     ui.drawLine(
-                        tmpVec1:set(graphPadding + xOffset, math.round(topPadding + yPPU * ((y - yDiv * t) - yMin))),
-                        tmpVec2:set(size.x - graphPadding + xOffset, math.round(topPadding + yPPU * ((y - yDiv * t) - xMin))),
+                        tmpVec1:set(graphPadding + xOffset, lineYCoord),
+                        tmpVec2:set(size.x - graphPadding + xOffset, lineYCoord),
                         graphSubDivColor
                     )
                 end
             end
 
+            local lineYCoord = math.round(topPadding + yPPU * (y - yMin))
+
             ui.drawLine(
-                tmpVec1:set(graphPadding + xOffset, math.round(topPadding + yPPU * (y - yMin))),
-                tmpVec2:set(size.x - graphPadding + xOffset, math.round(topPadding + yPPU * (y - xMin))),
+                tmpVec1:set(graphPadding + xOffset, lineYCoord),
+                tmpVec2:set(size.x - graphPadding + xOffset, lineYCoord),
                 graphDivColor
             )
 
@@ -282,6 +283,18 @@ local function drawGraph(size, xTitle, yTitle, xMin, xMax, yMin, yMax, xDiv, yDi
                     1.0 - (((y - yMin) / yRange) * ((size.y - graphPadding - topPadding + (graphHeight * 0.018)) / size.y) + ((graphPadding - (graphHeight * 0.0053333)) / size.y))
                 ),
                 size
+            )
+            ui.setCursorX(xOffset)
+            ui.setCursorY(0)
+        end
+
+        if yLimitHighlight ~= nil and yLimitHighlight > 0 then
+            local lineYCoord = math.round(topPadding + yPPU * ((yMax - yLimitHighlight) - yMin))
+            ui.drawLine(
+                tmpVec1:set(graphPadding + xOffset + 1, lineYCoord),
+                tmpVec2:set(size.x - graphPadding + xOffset, lineYCoord),
+                graphYLimitColor,
+                3
             )
             ui.setCursorX(xOffset)
             ui.setCursorY(0)
@@ -363,11 +376,11 @@ local function drawGraph(size, xTitle, yTitle, xMin, xMax, yMin, yMax, xDiv, yDi
 end
 
 local function getRpmDivision(maxRpm)
-    if maxRpm < 2000.0 then
+    if maxRpm <= 2000.0 then
         return 100.0
-    elseif maxRpm < 5000.0 then
+    elseif maxRpm <= 5000.0 then
         return 250.0
-    elseif maxRpm < 10000.0 then
+    elseif maxRpm <= 10000.0 then
         return 500.0
     else
         return 10.0 * getRpmDivision(maxRpm / 10.0)
@@ -375,11 +388,11 @@ local function getRpmDivision(maxRpm)
 end
 
 local function getSpeedDivision(maxSpeed)
-    if maxSpeed < 20.0 then
+    if maxSpeed <= 20.0 then
         return 2.5
-    elseif maxSpeed < 50.0 then
+    elseif maxSpeed <= 50.0 then
         return 5.0
-    elseif maxSpeed < 100.0 then
+    elseif maxSpeed <= 100.0 then
         return 10.0
     else
         return 10.0 * getSpeedDivision(maxSpeed / 10.0)
@@ -413,8 +426,9 @@ function script.windowMain()
     local drawShifts        = (savedCfg.showShiftingPoints and #lineData2 > 1)
     local graphMaxSpeed     = math.ceil(lineData[#lineData][2][1] * speedMult / speedDiv) * speedDiv
     local graphMaxRpm       = math.ceil(lineData[#lineData][2][2] / 1000.0) * 1000.0
-    local rpmSubDivSimple   = 1000.0 / math.clamp(getRpmDivision(graphMaxRpm * 2.0), 125.0, 1000.0)
-    local rpmSubDivAdvanced = 1000.0 / math.clamp(getRpmDivision(graphMaxRpm), 125.0, 1000.0)
+    local rpmDiv            = graphMaxRpm > 20000 and 2000 or 1000 -- simpler logic for main rpm divisions
+    local rpmSubDivSimple   = rpmDiv / math.clamp(getRpmDivision(graphMaxRpm * 2.0), 125.0, 1000.0)
+    local rpmSubDivAdvanced = rpmDiv / math.clamp(getRpmDivision(graphMaxRpm), 125.0, 1000.0)
 
     drawGraph(
         vec2(ui.availableSpace().x, ui.availableSpace().y - 40),
@@ -425,14 +439,14 @@ function script.windowMain()
         0,
         graphMaxRpm,
         speedDiv,
-        1000,
+        rpmDiv,
         speedMult,
         drawShifts and rpmSubDivAdvanced or rpmSubDivSimple,
         drawShifts and lineData2 or lineData,
         drawShifts and lineData2 or nil,
         drawShifts and powerBandStart or nil,
         drawShifts and powerBandEnd or nil,
-        drawShifts and lineData[#lineData][2][2] or nil
+        lineData[#lineData][2][2] --drawShifts and lineData[#lineData][2][2] or nil
     )
 
     showCheckbox("metric", "Metric", false, false, 0)
