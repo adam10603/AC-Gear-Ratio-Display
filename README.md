@@ -8,7 +8,7 @@
 
 This is a UI widget for Assetto Corsa for visualizing the gear ratios of the car on the setup screen.
 
-It can either show the speed in metric or imperial units, and it can also adjust the graph to show the ideal shifting points for each gear (based on the engine's power curve).
+It has options for showing the speed in metric or imperial units, calculating ideal shifting points for each gear (based on the engine's power curve), and visualizing the engine's optimal power band.
 
 ## 🖥️ Installation
 
