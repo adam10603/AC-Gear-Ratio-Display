@@ -1,14 +1,14 @@
 # Assetto Corsa: Gear Ratio Display
 
-![Version](https://img.shields.io/badge/Version-1.0.4-blue.svg) ![Compatibility](https://img.shields.io/badge/CSP-0.2.0+-green.svg)
+![Version](https://img.shields.io/badge/Version-1.1-blue.svg) ![Compatibility](https://img.shields.io/badge/CSP-0.2.0+-green.svg)
 
-![Preview](https://i.imgur.com/WgYrcdV.png)
+![Preview](https://i.imgur.com/UZcoJXQ.png)
 
 ## 🖊️ Intro
 
 This is a UI widget for Assetto Corsa for visualizing the gear ratios of the car on the setup screen.
 
-It can either show the speed in metric or imperial units, and it can also adjust the graph to show the ideal shifting points for each gear (based on the engine's power curve).
+It has options for showing the speed in metric or imperial units, calculating ideal shifting points for each gear (based on the engine's power curve), and visualizing the engine's optimal power band.
 
 ## 🖥️ Installation
 
@@ -18,7 +18,7 @@ First, download the latest version from [***Releases***](https://github.com/adam
 
 Once installed, it will automatically appear on the setup screen, just like this:
 
-![Setup screen](https://i.imgur.com/rsotG2r.png)
+![Setup screen](https://i.imgur.com/1OLXkG9.png)
 
 ## 💖 Supporting
 
