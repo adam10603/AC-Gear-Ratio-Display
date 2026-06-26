@@ -32,7 +32,7 @@ local canGetPowerBand  = true
 
 local tooltips = {
     metric             = "Toggles between KPH and MPH.",
-    showShiftingPoints = "Changes the graph to show the optimal shifting points (based on the engine's power curve).\n\nAlso highlights the ideal power band in blue. This is the RPM range where the engine outputs over 98% of its peak power.\n\nThis setting is only available for cars with no MGU-K!"
+    showShiftingPoints = "Changes the graph to show the optimal shifting points (based on the engine's power curve).\n\nAlso highlights the ideal power band in blue. This is the RPM range where the engine outputs over 98% of its peak power.\n\nThis setting might not be available on certain cars!"
 }
 
 local function isNumberValid(x)
@@ -108,8 +108,12 @@ local function updateData(vehicle, cPhys)
         gearStartRPM    = perfData.maxRPM * (nextRatio / curRatio)
     end
 
-    if not perfData.brokenEngineIni and perfData.baseTorqueCurve and vehicle.mgukDeliveryCount == 0 then
+    if not perfData.brokenEngineIni and perfData.baseTorqueCurve and (vehicle.mgukDeliveryCount == 0 or perfData.uiTorqueCurveAvailable) then
         local shiftingTable = perfData:calcShiftingTable(0.1, 1.0)
+
+        if #shiftingTable ~= vehicle.gearCount then
+            return
+        end
 
         gearStartRPM   = 0
         gearStartSpeed = 0 -- km/h
@@ -411,6 +415,7 @@ function script.windowMain()
     local cPhys = ac.getCarPhysics(0)
 
     if not cPhys.gearRatios or #cPhys.gearRatios == 0 or not cPhys.finalRatio or cPhys.finalRatio == 0 then
+        ui.setNextTextBold()
         ui.textColored("    Cannot read gear ratios!\n    This usually happens if a mod car has encrypted data files.", rgbm(1.0, 0.0, 0.0, 1.0))
         canGetPowerBand = false
         return
