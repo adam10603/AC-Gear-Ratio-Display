@@ -56,6 +56,13 @@ local function getPredictedSpeedForRPM(rpm, vehicle, drivetrainRatio)
     return (rpm * math.pi * wheelDiameter) / (60.0 * drivetrainRatio)
 end
 
+---@param vehicle ac.StateCar
+local function getPredictedRPMForSpeed(speedKph, vehicle, drivetrainRatio)
+    local referenceWheels = getWheels(getReferenceWheelIndicies(vehicle), vehicle)
+    local wheelDiameter = (referenceWheels[1].tyreRadius + referenceWheels[2].tyreRadius)
+    return speedKph * (60.0 * drivetrainRatio) / (math.pi * wheelDiameter)
+end
+
 -- Returns `true` if the gear set hash had to be updated
 ---@param vehicle ac.StateCar
 ---@param cPhys ac.StateCarPhysics
